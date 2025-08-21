@@ -351,7 +351,14 @@ def create_map_with_geojson(api_key, pop_df, opacity_col):
             }
         })
 
-    payload = {"type": "SET_GEOJSON", "payload": {"features": features}}
+    payload = {
+        "type": "SET_GEOJSON",
+        "payload": {
+            "center": {"lat": 36.502306, "lng": 127.264738},
+            "level": 5,                     # ← 여기!
+            "features": features
+        }
+    }
     msg_json = json.dumps(payload, ensure_ascii=False)
 
     html_code = """
