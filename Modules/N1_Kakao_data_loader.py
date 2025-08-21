@@ -13,10 +13,6 @@ import os
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 
-with open("{}/db_config.yaml".format(script_dir), 'r') as file:
-    config = yaml.safe_load(file)
-mysql_config = config['mysql']
-
 sejong_gdf = gpd.read_file("{}/ODD/sejong/Station.shp".format(script_dir))
 daejeon_gdf = gpd.read_file("{}/ODD/daejeon/Station.shp".format(script_dir))
 gdf = pd.concat([sejong_gdf, daejeon_gdf]).reset_index(drop=True)
@@ -29,23 +25,7 @@ def parse_onboarding_time(t):
     except:
         return np.nan
 
-con = pymysql.connect(
-    user=mysql_config['user'],
-    passwd=mysql_config['passwd'],
-    host=mysql_config['host'],
-    port=mysql_config['port'],
-    db=mysql_config['db'],
-    charset=mysql_config['charset'],
-    use_unicode=mysql_config['use_unicode']
-)
-mycursor = con.cursor()
-query = """
-    select * from hdl.dispatch;
-"""
-mycursor.execute(query)
-data = mycursor.fetchall()
-con.close()
-df = pd.DataFrame(data, columns=["dispatchID", "messageTime", "passengerID", "requestID", "routeIDs", "pickupStationName", "dropoffStationName", "reserveType", "onboardingTime", "dropoffTime", "linkIDs", "pickupStationID", "dropoffStationID", "tripID", "operationID", "vehicleID"])
+df = pd.read_csv("{}/data/dispatch_df.csv".format(script_dir))
 df['onboarding_datetime'] = df['onboardingTime'].apply(parse_onboarding_time)
 
 def return_pickup_station_count(current_time, days_interval):

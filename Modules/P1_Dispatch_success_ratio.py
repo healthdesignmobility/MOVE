@@ -16,34 +16,14 @@ import os
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 
-with open("{}/db_config.yaml".format(script_dir), 'r') as file:
-    config = yaml.safe_load(file)
-mysql_config = config['mysql']
-
 def parse_onboarding_time(t):
     try:
         t_str = str(int(t)).zfill(12)
         return datetime.strptime(t_str, "%Y%m%d%H%M")
     except:
         return np.nan
-    
-con = pymysql.connect(
-    user=mysql_config['user'],
-    passwd=mysql_config['passwd'],
-    host=mysql_config['host'],
-    port=mysql_config['port'],
-    db=mysql_config['db'],
-    charset=mysql_config['charset'],
-    use_unicode=mysql_config['use_unicode']
-)
-mycursor = con.cursor()
-query = """
-    select * from hdl.reservation_request;
-"""
-mycursor.execute(query)
-data = mycursor.fetchall()
-con.close()
-request_df = pd.DataFrame(data, columns=["requestID", "passengerID", "messageTime", "pickupStationID", "dropoffStationID", "serviceType", "reserveType", "dispatchID", "responseStatus", "confirmCheck", "passengerCount", "wheelchairCount", "failInfoList", "pickupTimeRequest"])
+
+request_df = pd.read_csv("{}/data/request_df.csv".format(script_dir))
 
 def return_dispatch_ratio(current_time, days_interval):
 

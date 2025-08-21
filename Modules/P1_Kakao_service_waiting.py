@@ -16,10 +16,6 @@ import os
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 
-with open("{}/db_config.yaml".format(script_dir), 'r') as file:
-    config = yaml.safe_load(file)
-mysql_config = config['mysql']
-
 sejong_gdf = gpd.read_file("{}/ODD/sejong/Station.shp".format(script_dir))
 daejeon_gdf = gpd.read_file("{}/ODD/daejeon/Station.shp".format(script_dir))
 gdf = pd.concat([sejong_gdf, daejeon_gdf]).reset_index(drop=True)
@@ -32,83 +28,20 @@ def parse_onboarding_time(t):
     except:
         return np.nan
 
-con = pymysql.connect(
-    user=mysql_config['user'],
-    passwd=mysql_config['passwd'],
-    host=mysql_config['host'],
-    port=mysql_config['port'],
-    db=mysql_config['db'],
-    charset=mysql_config['charset'],
-    use_unicode=mysql_config['use_unicode']
-)
-mycursor = con.cursor()
-query = """
-    select * from hdl.dispatch;
-"""
-mycursor.execute(query)
-data = mycursor.fetchall()
-con.close()
-dispatch_df = pd.DataFrame(data, columns=["dispatchID", "messageTime", "passengerID", "requestID", "routeIDs", "pickupStationName", "dropoffStationName", "reserveType", "onboardingTime", "dropoffTime", "linkIDs", "pickupStationID", "dropoffStationID", "tripID", "operationID", "vehicleID"])
+
+dispatch_df = pd.read_csv("{}/data/dispatch_df.csv".format(script_dir))
 dispatch_df['onboarding_datetime'] = dispatch_df['onboardingTime'].apply(parse_onboarding_time)
 dispatch_df['dropoff_datetime'] = dispatch_df['dropoffTime'].apply(parse_onboarding_time)
 
-con = pymysql.connect(
-    user=mysql_config['user'],
-    passwd=mysql_config['passwd'],
-    host=mysql_config['host'],
-    port=mysql_config['port'],
-    db=mysql_config['db'],
-    charset=mysql_config['charset'],
-    use_unicode=mysql_config['use_unicode']
-)
-mycursor = con.cursor()
-query = """
-    select * from hdl.operation;
-"""
-mycursor.execute(query)
-data = mycursor.fetchall()
-con.close()
-operation_df = pd.DataFrame(data, columns=["operationID", "vehicleID", "StationIDs", "routeIDs", "startTime", "endTime", "VehicleType", "operationServiceType"])
+operation_df = pd.read_csv("{}/data/operation_df.csv".format(script_dir))
 operation_df['startTime_datetime'] = operation_df['startTime'].apply(parse_onboarding_time)
 operation_df['endTime_datetime'] = operation_df['endTime'].apply(parse_onboarding_time)
 
-con = pymysql.connect(
-    user=mysql_config['user'],
-    passwd=mysql_config['passwd'],
-    host=mysql_config['host'],
-    port=mysql_config['port'],
-    db=mysql_config['db'],
-    charset=mysql_config['charset'],
-    use_unicode=mysql_config['use_unicode']
-)
-mycursor = con.cursor()
-query = """
-    select * from hdl.route;
-"""
-mycursor.execute(query)
-data = mycursor.fetchall()
-con.close()
-route_df = pd.DataFrame(data, columns=["routeID", "routeSeq", "operationID", "vehicleID", "routeInfo", "linkIDs", "NodeIDs", "originStationID", "originDeptTime", "destinationID", "destDeptTime", "onboardingNum", "dispatchIDs", "lon", "lat", "originBoardingPxIDs", "originGetoffPxIDs", "destBoardingPxIDs", "destGetoffPxIDs"])
+route_df = pd.read_csv("{}/data/route_df.csv".format(script_dir))
 route_df['originDeptTime_datetime'] = route_df['originDeptTime'].apply(parse_onboarding_time)
 route_df['destDeptTime_datetime'] = route_df['destDeptTime'].apply(parse_onboarding_time)
 
-con = pymysql.connect(
-    user=mysql_config['user'],
-    passwd=mysql_config['passwd'],
-    host=mysql_config['host'],
-    port=mysql_config['port'],
-    db=mysql_config['db'],
-    charset=mysql_config['charset'],
-    use_unicode=mysql_config['use_unicode']
-)
-mycursor = con.cursor()
-query = """
-    select * from hdl.reservation_request;
-"""
-mycursor.execute(query)
-data = mycursor.fetchall()
-con.close()
-request_df = pd.DataFrame(data, columns=["requestID", "passengerID", "messageTime", "pickupStationID", "dropoffStationID", "serviceType", "reserveType", "dispatchID", "responseStatus", "confirmCheck", "passengerCount", "wheelchairCount", "failInfoList", "pickupTimeRequest"])
+request_df = pd.read_csv("{}/data/request_df.csv".format(script_dir))
 
 reservetype_dict = {
     '사전 예약': 1,
