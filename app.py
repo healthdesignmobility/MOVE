@@ -132,7 +132,7 @@ def default_map_html(api_key):
       <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:600px;border:0"></iframe>
       <script>
         const iframe = document.getElementById('kmap');
-        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const targetOrigin = new URL("{PAGES_URL}").origin;
         const msg = {MSG_JSON};
         function send(){{
           iframe.contentWindow.postMessage(msg, targetOrigin);
@@ -173,7 +173,7 @@ def create_map_html(api_key, locations):
       <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:600px;border:0"></iframe>
       <script>
         const iframe = document.getElementById('kmap');
-        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const targetOrigin = new URL("{PAGES_URL}").origin;
         const msg = {MSG_JSON};
         function send(){{
           iframe.contentWindow.postMessage(msg, targetOrigin);
@@ -247,7 +247,7 @@ def create_map_routes_html(api_key, routes, pickup_stations):
       <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:600px;border:0"></iframe>
       <script>
         const iframe = document.getElementById('kmap');
-        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const targetOrigin = new URL("{PAGES_URL}").origin;
         const msg = {MSG_JSON};
         function send(){{
           iframe.contentWindow.postMessage(msg, targetOrigin);
@@ -298,7 +298,7 @@ def create_map_links_html(api_key, link_df):
       <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:600px;border:0"></iframe>
       <script>
         const iframe = document.getElementById('kmap');
-        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const targetOrigin = new URL("{PAGES_URL}").origin;
         const msg = {MSG_JSON};
         function send(){{
           iframe.contentWindow.postMessage(msg, targetOrigin);
@@ -345,7 +345,7 @@ def create_map_with_geojson(api_key, pop_df, opacity_col):
       <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:700px;border:0"></iframe>
       <script>
         const iframe = document.getElementById('kmap');
-        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+       const targetOrigin = new URL("{PAGES_URL}").origin;
         const msg = {MSG_JSON};
         function send(){{
           iframe.contentWindow.postMessage(msg, targetOrigin);
