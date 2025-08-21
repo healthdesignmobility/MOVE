@@ -58,7 +58,7 @@ alt.themes.enable("dark")
 
 ############# 카카오맵 연동 및 표출 함수 정의 #############
 
-api_key = "sdjghkwergbkerjn"
+kakao_api_key = "sdjghkwergbkerjn"
 PAGES_URL = "https://healthdesignmobility.github.io/move-map/"
 
 # 카카오맵 마커(포인트) 크기 정규화하는 함수 정의
