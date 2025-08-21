@@ -857,14 +857,23 @@ if selected == "서비스 접근성":
     
     col = st.columns((1, 1, 1), gap='large')
     with col[0]:
-        map_html = create_map_with_geojson(kakao_api_key, population_df, 'total_percent')
-        components.html(map_html, height=750)
+       if population_df is not None and not population_df.empty:
+           map_html = create_map_with_geojson(kakao_api_key, population_df, 'total_percent')
+       else:
+           map_html = default_map_html(kakao_api_key)
+       components.html(map_html, height=750)
     with col[1]:
-        map_html = create_map_with_geojson(kakao_api_key, population_df, 'disabled_percent')
-        components.html(map_html, height=750)
+       if population_df is not None and not population_df.empty:
+           map_html = create_map_with_geojson(kakao_api_key, population_df, 'disabled_percent')
+       else:
+           map_html = default_map_html(kakao_api_key)
+       components.html(map_html, height=750)
     with col[2]:
-        map_html = create_map_with_geojson(kakao_api_key, population_df, 'olderadults_percent')
-        components.html(map_html, height=750)
+       if population_df is not None and not population_df.empty:
+           map_html = create_map_with_geojson(kakao_api_key, population_df, 'olderadults_percent')
+       else:
+           map_html = default_map_html(kakao_api_key)
+       components.html(map_html, height=750)
 
 ### Page 4. 시뮬레이션 시각화
 if selected == "시뮬레이션 시각화":
