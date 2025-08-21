@@ -320,17 +320,34 @@ def create_map_links_html(api_key, link_df):
 def create_map_with_geojson(api_key, pop_df, opacity_col):
     import json
     import geopandas as gpd
+    import pandas as pd
 
     features = []
     for _, row in pop_df.iterrows():
         if row.get("geometry") is None:
             continue
-        geometry = json.loads(gpd.GeoSeries([row["geometry"]]).to_json())["features"][0]["geometry"]
+
+        # --- opacity 값 안전하게 정리 ---
+        val = row.get(opacity_col, 0)
+        try:
+            val = pd.to_numeric(val, errors="coerce")
+        except Exception:
+            val = 0.0
+        if pd.isna(val):
+            val = 0.0
+        # 0~1로 클립
+        val = float(max(0.0, min(1.0, float(val))))
+        # -----------------------------------
+
+        geometry = json.loads(
+            gpd.GeoSeries([row["geometry"]]).to_json()
+        )["features"][0]["geometry"]
+
         features.append({
             "type": "Feature",
-            "geometry": geometry,  # GeoJSON geometry
+            "geometry": geometry,
             "properties": {
-                "opacity_value": float(min(max(row.get(opacity_col, 0), 0), 1))
+                "opacity_value": val
             }
         })
 
@@ -345,7 +362,7 @@ def create_map_with_geojson(api_key, pop_df, opacity_col):
       <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:700px;border:0"></iframe>
       <script>
         const iframe = document.getElementById('kmap');
-       const targetOrigin = new URL("{PAGES_URL}").origin;
+        const targetOrigin = new URL("{PAGES_URL}").origin;
         const msg = {MSG_JSON};
         function send(){{
           iframe.contentWindow.postMessage(msg, targetOrigin);
@@ -362,7 +379,6 @@ def create_map_with_geojson(api_key, pop_df, opacity_col):
     """.format(PAGES_URL=PAGES_URL, MSG_JSON=msg_json)
 
     return html_code
-
 
 ########## 여기부터 대시보드 제작 ##########
 
