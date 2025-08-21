@@ -74,7 +74,7 @@ def make_json_safe(x):
         return bool(x)
 
     # 날짜/시간 → ISO 문자열
-    if isinstance(x, (datetime.datetime, datetime.date, datetime.time)):
+    if isinstance(x, (dt.datetime, dt.date, dt.time)):
         return x.isoformat()
 
     # pandas.Timestamp / NaT
