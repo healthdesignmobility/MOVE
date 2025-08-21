@@ -1,0 +1,8 @@
+mysql:
+  user: root
+  passwd: "3644"
+  host: "143.248.121.90"
+  port: 3306
+  db: hdl
+  charset: utf8mb4
+  use_unicode: true
