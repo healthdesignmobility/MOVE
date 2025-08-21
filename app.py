@@ -58,8 +58,8 @@ alt.themes.enable("dark")
 
 ############# 카카오맵 연동 및 표출 함수 정의 #############
 
-# 카카오맵 API key
-kakao_api_key = "fc1c450fc44c5cda47534a556fe9b4f2"
+api_key = "sdjghkwergbkerjn"
+PAGES_URL = "https://healthdesignmobility.github.io/move-map/"
 
 # 카카오맵 마커(포인트) 크기 정규화하는 함수 정의
 def normalize_weights(locations, min_size=20, max_size=40):
@@ -73,282 +73,254 @@ def normalize_weights(locations, min_size=20, max_size=40):
 
 # 기본 지도 표출: 표출할 정보가 없을 때 활용
 def default_map_html(api_key):
-    html_code = f"""
+    import json
+
+    payload = {
+        "type": "SET_MARKERS",
+        "payload": {
+            "center": {"lat": 36.502306, "lng": 127.264738},
+            "level": 4,
+            "locations": []  # 표시할 마커 없음
+        }
+    }
+    msg_json = json.dumps(payload, ensure_ascii=False)
+
+    html_code = """
     <!DOCTYPE html>
     <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Kakao Map</title>
-        <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={api_key}"></script>
-    </head>
+    <head><meta charset="utf-8"><title>Kakao Map</title></head>
     <body>
-        <div id="map" style="width:95%;height:600px;"></div>
-        <script>
-            if (typeof kakao !== 'undefined') {{
-                var mapContainer = document.getElementById('map'), 
-                mapOption = {{ 
-                    center: new kakao.maps.LatLng(36.502306, 127.264738),
-                    level: 4
-                }};
-                var map = new kakao.maps.Map(mapContainer, mapOption); 
-
-            }} else {{
-                document.body.innerHTML = "<h3>Kakao Maps API 로드 실패</h3>";
-            }}
-        </script>
+      <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:600px;border:0"></iframe>
+      <script>
+        const iframe = document.getElementById('kmap');
+        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const msg = {MSG_JSON};
+        function send(){{
+          iframe.contentWindow.postMessage(msg, targetOrigin);
+        }}
+        iframe.addEventListener('load', () => {{}});
+        window.addEventListener('message', (e) => {{
+          if (e.origin === targetOrigin && e.data && e.data.type === 'MAP_READY') {{
+            send();
+          }}
+        }});
+      </script>
     </body>
     </html>
-    """
+    """.format(PAGES_URL=PAGES_URL, MSG_JSON=msg_json)
+
     return html_code
 
 # Page 1. 서비스 대기 시간 지도 마커 표출
 # Page 3. 출발 정류장 이용 빈도 마커 표출
 def create_map_html(api_key, locations):
-    locations_js = ""
-    for loc in locations:
-        locations_js += f"""
-        var markerPosition = new kakao.maps.LatLng({loc['lat']}, {loc['lng']});
-        var markerImage = new kakao.maps.MarkerImage(
-            'http://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png',
-            new kakao.maps.Size({loc['scaled_weight']}, {loc['scaled_weight']*1.35}),
-            {{
-                offset: new kakao.maps.Point({loc['scaled_weight']/2}, {loc['scaled_weight']*1.35})
-            }}
-        );
-        var marker = new kakao.maps.Marker({{
-            position: markerPosition,
-            image: markerImage,
-            title: "{loc['station']}: {loc['weight']}"
-        }});
-        marker.setMap(map);
-        """
-    html_code = f"""
+    import json
+
+    payload = {
+        "type": "SET_MARKERS",
+        "payload": {
+            "center": {"lat": 36.502306, "lng": 127.264738},
+            "level": 4,
+            "locations": locations  # 각 항목: {station, lat, lng, weight, scaled_weight}
+        }
+    }
+    msg_json = json.dumps(payload, ensure_ascii=False)
+
+    html_code = """
     <!DOCTYPE html>
     <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Kakao Map</title>
-        <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={api_key}"></script>
-    </head>
+    <head><meta charset="utf-8"><title>Kakao Map</title></head>
     <body>
-        <div id="map" style="width:95%;height:600px;"></div>
-        <script>
-            if (typeof kakao !== 'undefined') {{
-                var mapContainer = document.getElementById('map'), 
-                mapOption = {{ 
-                    center: new kakao.maps.LatLng(36.502306, 127.264738),
-                    level: 4
-                }};
-                var map = new kakao.maps.Map(mapContainer, mapOption); 
-                {locations_js}
-            }} else {{
-                document.body.innerHTML = "<h3>Kakao Maps API 로드 실패</h3>";
-            }}
-        </script>
+      <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:600px;border:0"></iframe>
+      <script>
+        const iframe = document.getElementById('kmap');
+        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const msg = {MSG_JSON};
+        function send(){{
+          iframe.contentWindow.postMessage(msg, targetOrigin);
+        }}
+        iframe.addEventListener('load', () => {{}});
+        window.addEventListener('message', (e) => {{
+          if (e.origin === targetOrigin && e.data && e.data.type === 'MAP_READY') {{
+            send();
+          }}
+        }});
+      </script>
     </body>
     </html>
-    """
+    """.format(PAGES_URL=PAGES_URL, MSG_JSON=msg_json)
+
     return html_code
 
 # Page 1. 실시간 운행 정보 표출 (30분 전/후 포함 총 운행 모두 표출)
 def create_map_routes_html(api_key, routes, pickup_stations):
+    import json
+    from collections import defaultdict
+
+    # 색상별 연속 세그먼트로 압축
     color_segments = defaultdict(list)
     for route in routes:
         if not route:
             continue
         current_color = route[0]['color']
-        current_segment = [route[0]]
+        current_segment = [{"lat": route[0]['lat'], "lng": route[0]['lng']}]
         for point in route[1:]:
             if point['color'] == current_color:
-                current_segment.append(point)
+                current_segment.append({"lat": point['lat'], "lng": point['lng']})
             else:
                 if len(current_segment) >= 2:
                     color_segments[current_color].append(current_segment)
-                current_segment = [point]
                 current_color = point['color']
+                current_segment = [{"lat": point['lat'], "lng": point['lng']}]
         if len(current_segment) >= 2:
             color_segments[current_color].append(current_segment)
 
-    color_counts = {color: len(segments) for color, segments in color_segments.items()}
-    sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
+    # payload용 routes 배열 만들기
+    segs = []
+    for color, segments in color_segments.items():
+        for seg in segments:
+            segs.append({
+                "path": seg,            # [{lat, lng}, ...]
+                "color": color,
+                "weight": 3,
+                "opacity": 0.9,
+                "style": "shortdash"
+            })
 
-    routes_js = ""
-    for color, _ in sorted_colors:
-        for segment in color_segments[color]:
-            path_js = ",\n".join([
-                f"new kakao.maps.LatLng({pt['lat']}, {pt['lng']})"
-                for pt in segment
-            ])
-            routes_js += f"""
-            var polyline = new kakao.maps.Polyline({{
-                path: [{path_js}],
-                strokeWeight: 3,
-                strokeColor: '{color}',
-                strokeOpacity: 0.9,
-                strokeStyle: 'shortdash'
-            }});
-            polyline.setMap(map);
-            """
+    payload = {
+        "type": "SET_ROUTES",
+        "payload": {
+            "center": {"lat": 36.502306, "lng": 127.264738},
+            "level": 4,
+            "routes": segs,
+            "pickups": pickup_stations  # [{lat,lng,onboardingTime,passengerCount,wheelchairCount,serviceType}, ...]
+        }
+    }
+    msg_json = json.dumps(payload, ensure_ascii=False)
 
-    pickup_js = ""
-    for i, loc in enumerate(pickup_stations):
-        pickup_js += f"""
-
-        var markerPosition = new kakao.maps.LatLng({loc['lat']}, {loc['lng']});
-
-        var markerImage = new kakao.maps.MarkerImage(
-            'http://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png',
-            new kakao.maps.Size({30}, {30*1.35}),
-            {{
-                offset: new kakao.maps.Point({30/2}, {30*1.35})
-            }}
-        );
-        var marker = new kakao.maps.Marker({{
-            position: markerPosition,
-            image: markerImage, // 이미지 설정
-            title: "탑승순서: {i+1}\\n탑승시간: {loc['onboardingTime']}\\n승객 수: {loc['passengerCount']}\\n휠체어 수: {loc['wheelchairCount']}\\n서비스 유형: {loc['serviceType']} "
-        }});
-        marker.setMap(map);
-        """
-
-    html_code = f"""
+    html_code = """
     <!DOCTYPE html>
     <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Kakao Map</title>
-        <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={api_key}"></script>
-    </head>
+    <head><meta charset="utf-8"><title>Kakao Map</title></head>
     <body>
-        <div id="map" style="width:95%;height:600px;"></div>
-        <script>
-            if (typeof kakao !== 'undefined') {{
-                var mapContainer = document.getElementById('map'), 
-                mapOption = {{ 
-                    center: new kakao.maps.LatLng(36.502306, 127.264738),
-                    level: 4
-                }};
-                var map = new kakao.maps.Map(mapContainer, mapOption); 
-                {routes_js}
-                {pickup_js}
-            }} else {{
-                document.body.innerHTML = "<h3>Kakao Maps API 로드 실패</h3>";
-            }}
-        </script>
+      <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:600px;border:0"></iframe>
+      <script>
+        const iframe = document.getElementById('kmap');
+        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const msg = {MSG_JSON};
+        function send(){{
+          iframe.contentWindow.postMessage(msg, targetOrigin);
+        }}
+        iframe.addEventListener('load', () => {{}});
+        window.addEventListener('message', (e) => {{
+          if (e.origin === targetOrigin && e.data && e.data.type === 'MAP_READY') {{
+            send();
+          }}
+        }});
+      </script>
     </body>
     </html>
-    """
+    """.format(PAGES_URL=PAGES_URL, MSG_JSON=msg_json)
+
     return html_code
 
 # Page 2. 운행 경로 빈도 표출
 def create_map_links_html(api_key, link_df):
+    import json
+    import numpy as np
+
     max_count = link_df['count'].max()
     min_count = link_df['count'].min()
-    norm = lambda c: int(np.interp(c, [min_count, max_count], [5, 30]))
-    routes_js = ""
+    def norm_w(c): return int(np.interp(c, [min_count, max_count], [5, 30]))
+    def norm_o(c): return float(np.interp(c, [min_count, max_count], [0.5, 1.0]))
+
+    links = []
     for _, row in link_df.iterrows():
-        weight = norm(row['count'])
-        opacity = float(np.interp(row['count'], [min_count, max_count], [0.5, 1.0]))
-        path_js = f"""
-        new kakao.maps.LatLng({row['start_lat']}, {row['start_lon']}),
-        new kakao.maps.LatLng({row['end_lat']}, {row['end_lon']})
-        """
-        routes_js += f"""
-        var polyline = new kakao.maps.Polyline({{
-            path: [{path_js}],
-            strokeWeight: {weight},
-            strokeColor: '#002642',
-            strokeOpacity: {opacity},
-            strokeStyle: 'solid'
-        }});
-        polyline.setMap(map);
-        """
-    html_code = f"""
+        links.append({
+            "start_lat": row['start_lat'],
+            "start_lon": row['start_lon'],
+            "end_lat":   row['end_lat'],
+            "end_lon":   row['end_lon'],
+            "weight":    norm_w(row['count']),
+            "opacity":   norm_o(row['count']),
+            "color":     "#002642"
+        })
+
+    payload = {"type": "SET_LINKS", "payload": {"links": links}}
+    msg_json = json.dumps(payload, ensure_ascii=False)
+
+    html_code = """
     <!DOCTYPE html>
     <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Kakao Map</title>
-        <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={api_key}"></script>
-    </head>
+    <head><meta charset="utf-8"><title>Kakao Map</title></head>
     <body>
-        <div id="map" style="width:95%;height:600px;"></div>
-        <script>
-            if (typeof kakao !== 'undefined') {{
-                var mapContainer = document.getElementById('map'), 
-                mapOption = {{ 
-                    center: new kakao.maps.LatLng(36.502306, 127.264738),
-                    level: 4
-                }};
-                var map = new kakao.maps.Map(mapContainer, mapOption); 
-                {routes_js}
-            }} else {{
-                document.body.innerHTML = "<h3>Kakao Maps API 로드 실패</h3>";
-            }}
-        </script>
+      <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:600px;border:0"></iframe>
+      <script>
+        const iframe = document.getElementById('kmap');
+        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const msg = {MSG_JSON};
+        function send(){{
+          iframe.contentWindow.postMessage(msg, targetOrigin);
+        }}
+        iframe.addEventListener('load', () => {{}});
+        window.addEventListener('message', (e) => {{
+          if (e.origin === targetOrigin && e.data && e.data.type === 'MAP_READY') {{
+            send();
+          }}
+        }});
+      </script>
     </body>
     </html>
-    """
+    """.format(PAGES_URL=PAGES_URL, MSG_JSON=msg_json)
+
     return html_code
 
 # Page 3. 이용률 지도 그리드에 색상 넣어 표출
 def create_map_with_geojson(api_key, pop_df, opacity_col):
+    import json
+    import geopandas as gpd
+
     features = []
     for _, row in pop_df.iterrows():
-        if row["geometry"] is None:
+        if row.get("geometry") is None:
             continue
         geometry = json.loads(gpd.GeoSeries([row["geometry"]]).to_json())["features"][0]["geometry"]
-        properties = {
-            "opacity_value": min(max(float(row.get(opacity_col, 0)), 0), 1)
-        }
         features.append({
             "type": "Feature",
-            "geometry": geometry,
-            "properties": properties
+            "geometry": geometry,  # GeoJSON geometry
+            "properties": {
+                "opacity_value": float(min(max(row.get(opacity_col, 0), 0), 1))
+            }
         })
-    geojson = {
-        "type": "FeatureCollection",
-        "features": features
-    }
-    html_code = f"""
+
+    payload = {"type": "SET_GEOJSON", "payload": {"features": features}}
+    msg_json = json.dumps(payload, ensure_ascii=False)
+
+    html_code = """
     <!DOCTYPE html>
     <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Kakao Map with Polygons</title>
-        <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={api_key}"></script>
-    </head>
+    <head><meta charset="utf-8"><title>Kakao Map with Polygons</title></head>
     <body>
-        <div id="map" style="width:100%;height:700px;"></div>
-        <script>
-            var mapContainer = document.getElementById('map'),
-                mapOption = {{
-                    center: new kakao.maps.LatLng(36.502306, 127.264738),
-                    level: 5
-                }};
-            var map = new kakao.maps.Map(mapContainer, mapOption);
-            var geojson = {json.dumps(geojson)};
-            geojson.features.forEach(function(feature) {{
-                var coords = feature.geometry.coordinates[0];
-                var path = coords.map(function(coord) {{
-                    return new kakao.maps.LatLng(coord[1], coord[0]);
-                }});
-                var polygon = new kakao.maps.Polygon({{
-                    path: path,
-                    strokeWeight: 1,
-                    strokeColor: '#000000',
-                    strokeOpacity: 0.1,
-                    fillColor: '#ED553B',
-                    fillOpacity: feature.properties.opacity_value
-                }});
-                polygon.setMap(map);
-            }});
-        </script>
+      <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:700px;border:0"></iframe>
+      <script>
+        const iframe = document.getElementById('kmap');
+        const targetOrigin = "{PAGES_URL}".replace(/\\/$/, "");
+        const msg = {MSG_JSON};
+        function send(){{
+          iframe.contentWindow.postMessage(msg, targetOrigin);
+        }}
+        iframe.addEventListener('load', () => {{}});
+        window.addEventListener('message', (e) => {{
+          if (e.origin === targetOrigin && e.data && e.data.type === 'MAP_READY') {{
+            send();
+          }}
+        }});
+      </script>
     </body>
     </html>
-    """
-    return html_code
+    """.format(PAGES_URL=PAGES_URL, MSG_JSON=msg_json)
 
+    return html_code
 
 ########## 여기부터 대시보드 제작 ##########
 
