@@ -59,7 +59,7 @@ alt.themes.enable("dark")
 ############# 카카오맵 연동 및 표출 함수 정의 #############
 
 # 카카오맵 API key
-kakao_api_key = "c3655015be98a33aa6d5c75563e39d2c"
+kakao_api_key = "fc1c450fc44c5cda47534a556fe9b4f2"
 
 # 카카오맵 마커(포인트) 크기 정규화하는 함수 정의
 def normalize_weights(locations, min_size=20, max_size=40):
