@@ -56,6 +56,45 @@ st.set_page_config(
 alt.themes.enable("dark")
 
 
+
+
+### Timestamp형태 문자열로 변환 ####
+def make_json_safe(x):
+    """dict/list 내부까지 재귀적으로 JSON 직렬화 가능한 타입으로 변환"""
+    # 기본 타입
+    if x is None or isinstance(x, (str, int, float, bool)):
+        return x
+
+    # numpy 스칼라 → 파이썬 스칼라
+    if isinstance(x, (np.integer,)):
+        return int(x)
+    if isinstance(x, (np.floating,)):
+        return float(x)
+    if isinstance(x, (np.bool_,)):
+        return bool(x)
+
+    # 날짜/시간 → ISO 문자열
+    if isinstance(x, (datetime.datetime, datetime.date, datetime.time)):
+        return x.isoformat()
+
+    # pandas.Timestamp / NaT
+    if pd is not None:
+        if isinstance(x, pd.Timestamp):
+            return x.isoformat()
+        if x is pd.NaT:
+            return None
+
+    # 컨테이너
+    if isinstance(x, dict):
+        return {k: make_json_safe(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple, set)):
+        return [make_json_safe(v) for v in x]
+
+    # 그 외 알 수 없는 객체는 문자열로
+    return str(x)
+
+
+
 ############# 카카오맵 연동 및 표출 함수 정의 #############
 
 kakao_api_key = "sdjghkwergbkerjn"
@@ -196,7 +235,9 @@ def create_map_routes_html(api_key, routes, pickup_stations):
             "pickups": pickup_stations  # [{lat,lng,onboardingTime,passengerCount,wheelchairCount,serviceType}, ...]
         }
     }
-    msg_json = json.dumps(payload, ensure_ascii=False)
+   
+    safe_payload = make_json_safe(payload)
+    msg_json = json.dumps(safe_payload, ensure_ascii=False)
 
     html_code = """
     <!DOCTYPE html>
@@ -321,6 +362,7 @@ def create_map_with_geojson(api_key, pop_df, opacity_col):
     """.format(PAGES_URL=PAGES_URL, MSG_JSON=msg_json)
 
     return html_code
+
 
 ########## 여기부터 대시보드 제작 ##########
 
