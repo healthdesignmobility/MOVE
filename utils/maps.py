@@ -136,7 +136,65 @@ def links_map_html(PAGES_URL: str, appkey: str, link_df, height=700):
     payload = {"type": "SET_LINKS", "payload": {"links": links}}
     return _iframe_html(PAGES_URL, appkey, json.dumps(payload, ensure_ascii=False), height=height)
 
-def polygons_map_html(PAGES_URL: str, appkey: str, features, center=(36.502306, 127.264738), level=5, height=700):
+def _df_to_features(gdf, value_col):
+    """Geo(Data)Frame -> GeoJSON feature list. opacity_value는 0~1로 정규화."""
+    import pandas as pd
+    from shapely.geometry import Polygon, MultiPolygon
+
+    if not hasattr(gdf, "geometry"):
+        raise ValueError("GeoDataFrame/geometry column이 필요합니다.")
+
+    # 값 정규화 (0~1). 퍼센트(>1)면 0~100로 가정해 0~1로 스케일링
+    vals = pd.to_numeric(gdf[value_col], errors="coerce").fillna(0.0)
+    if (vals.max() - vals.min()) > 0:
+        norm = (vals - vals.min()) / (vals.max() - vals.min())
+    else:
+        norm = vals.copy()  # 전부 동일하면 0
+    # 시각적 가독성을 위해 0.15~0.9 범위로 압축
+    opacities = (0.15 + 0.75 * norm).clip(0, 0.95)
+
+    features = []
+    for (_, row), op in zip(gdf.iterrows(), opacities):
+        geom = row.geometry
+        if geom is None or geom.is_empty:
+            continue
+
+        def poly_to_coords(poly: Polygon):
+            # shapely는 (x=lon, y=lat). Kakao에서 new LatLng(c[1], c[0])로 읽으니 [lon, lat] 유지.
+            ring = list(poly.exterior.coords)
+            return [[ [float(x), float(y)] for (x, y) in ring ]]
+
+        if geom.geom_type == "Polygon":
+            coords = poly_to_coords(geom)
+            features.append({
+                "type": "Feature",
+                "geometry": {"type": "Polygon", "coordinates": coords},
+                "properties": {"opacity_value": float(op)}
+            })
+        elif geom.geom_type == "MultiPolygon":
+            for poly in geom.geoms:
+                coords = poly_to_coords(poly)
+                features.append({
+                    "type": "Feature",
+                    "geometry": {"type": "Polygon", "coordinates": coords},
+                    "properties": {"opacity_value": float(op)}
+                })
+        else:
+            # 라인/포인트 등은 스킵
+            continue
+    return features
+
+def polygons_map_html(PAGES_URL: str,
+                      appkey: str,
+                      gdf,                  # GeoDataFrame (또는 geometry 포함 DF)
+                      value_col: str,       # 투명도에 사용할 컬럼명
+                      center=(36.502306, 127.264738),
+                      level=5,
+                      height=700):
+    """
+    GeoDataFrame + value_col을 받아 polygon을 그릴 수 있는 payload로 변환후 iframe 반환.
+    """
+    features = _df_to_features(gdf, value_col)
     payload = {
         "type": "SET_GEOJSON",
         "payload": {
