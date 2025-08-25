@@ -32,7 +32,7 @@ st.session_state.setdefault("KAKAO_API_KEY", st.secrets.get("kakao_api_key", "")
 alt.themes.enable("dark")
 
 st.session_state.temp_interval = st.secrets["previous_days"]
-st.session_state.PAGES_URL = "https://healthdesignmobility.github.io/move/kakao_map/"
+st.session_state.PAGES_URL = "https://healthdesignmobility.github.io/MOVE/kakao_map/"
 st.session_state.KAKAO_API_KEY = st.secrets["kakao_api_key"]
 
 current_time  = st.session_state.current_time
