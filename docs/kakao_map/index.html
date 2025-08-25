@@ -62,20 +62,58 @@
       });
     }
 
+    function drawPolyline(points, color) {
+      const path = points.map(pt => new kakao.maps.LatLng(pt.lat, pt.lng));
+      new kakao.maps.Polyline({
+        path, strokeWeight: 3,
+        strokeColor: color || "#173F5F",
+        strokeOpacity: 0.9,
+        strokeStyle: "shortdash"
+      }).setMap(map);
+    }
+
+    // 기존 drawRoutes를 이걸로 교체
     function drawRoutes(p) {
       applyCenterLevel(p);
-      (p.routes || []).forEach(segList => {
-        if (!Array.isArray(segList) || segList.length < 2) return;
-        const color = segList[0].color || "#173F5F";
-        const path  = segList.map(pt => new kakao.maps.LatLng(pt.lat, pt.lng));
-        new kakao.maps.Polyline({
-          path, strokeWeight: 3, strokeColor: color, strokeOpacity: 0.9, strokeStyle: "shortdash"
-        }).setMap(map);
+      const routes = p.routes || [];
+
+      routes.forEach(route => {
+        if (!Array.isArray(route) || route.length < 2) return;
+
+        // 이미 세그먼트가 나뉘어 있으면 그대로 그림
+        if (Array.isArray(route[0])) {
+          route.forEach(seg => {
+            if (!Array.isArray(seg) || seg.length < 2) return;
+            const firstColored = seg.find(pt => pt && pt.color);
+            drawPolyline(seg, (firstColored && firstColored.color) || "#173F5F");
+          });
+          return;
+        }
+
+        // 한 리스트에 여러 색이 섞여 있으면 색이 바뀌는 지점마다 끊어서 그림
+        let chunk = [];
+        let currentColor = null;
+
+        for (const pt of route) {
+          const c = pt.color || "#173F5F";
+          if (currentColor === null || c === currentColor) {
+            chunk.push(pt);
+            currentColor = c;
+          } else {
+            if (chunk.length >= 2) drawPolyline(chunk, currentColor);
+            chunk = [pt];
+            currentColor = c;
+          }
+        }
+        if (chunk.length >= 2) drawPolyline(chunk, currentColor);
       });
+
+      // 픽업 마커는 기존대로
       (p.pickups || []).forEach((u, i) => {
         const pos  = new kakao.maps.LatLng(u.lat, u.lng);
         const size = 30;
-        const title = `탑승순서: ${i+1}\n탑승시간: ${u.onboardingTime}\n승객 수: ${u.passengerCount}\n휠체어 수: ${u.wheelchairCount}\n서비스 유형: ${u.serviceType}`;
+        const title =
+          `탑승순서: ${i+1}\n탑승시간: ${u.onboardingTime}\n승객 수: ${u.passengerCount}\n휠체어 수: ${u.wheelchairCount}\n서비스 유형: ${u.serviceType}`;
         new kakao.maps.Marker({ position: pos, image: markerImg(size), title }).setMap(map);
       });
     }

@@ -72,9 +72,9 @@ with st.sidebar:
             "nav-link-selected": {"background-color": "#468186", "font-weight": "bold", "color": "#ffffff"},
         },
     )
-    st.markdown("<div style='height:570px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:500px;'></div>", unsafe_allow_html=True)
     st.markdown("---")
-    st.sidebar.caption("📊 데이터 출처: 한국과학기술원 건설및환경공학과")
+    st.sidebar.caption("📊 데이터 출처: KAIST 건설및환경공학과")
     st.sidebar.caption("🕒 업데이트: {}".format(current_time))
     st.sidebar.caption("🛠️ 버전: v1.0.0")
     st.sidebar.caption("📬 문의: jungyubaik@kaist.ac.kr")
