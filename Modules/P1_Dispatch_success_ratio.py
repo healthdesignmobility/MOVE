@@ -12,9 +12,8 @@ import math
 import altair as alt
 import yaml
 import os
-
-script_path = os.path.abspath(__file__)
-script_dir = os.path.dirname(script_path)
+from pathlib import Path
+import streamlit as st
 
 def parse_onboarding_time(t):
     try:
@@ -23,7 +22,10 @@ def parse_onboarding_time(t):
     except:
         return np.nan
 
-request_df = pd.read_csv("{}/../data/request_df.csv".format(script_dir))
+HERE = Path(__file__).resolve().parent        # .../MOVE/Modules
+ROOT = HERE.parent                            # .../MOVE
+
+request_df = pd.read_csv(ROOT/"data"/"request_df.csv")
 
 def return_dispatch_ratio(current_time, days_interval):
 

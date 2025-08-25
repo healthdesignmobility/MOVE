@@ -11,14 +11,8 @@ import ast
 from shapely.geometry import Point
 import yaml
 import os
-
-script_path = os.path.abspath(__file__)
-script_dir = os.path.dirname(script_path)
-
-sejong_gdf = gpd.read_file("{}/../data/ODD/sejong/Station.shp".format(script_dir))
-daejeon_gdf = gpd.read_file("{}/../data/ODD/daejeon/Station.shp".format(script_dir))
-gdf = pd.concat([sejong_gdf, daejeon_gdf]).reset_index(drop=True)
-gdf['pickupStationID'] = gdf['StationID']
+from pathlib import Path
+import streamlit as st
 
 def parse_onboarding_time(t):
     try:
@@ -27,24 +21,30 @@ def parse_onboarding_time(t):
     except:
         return np.nan
 
-pop_df = gpd.read_file("{}/../data/sejong/Population/Population_Sample.shp".format(script_dir))
-station_df = gpd.read_file("{}/../data/ODD/sejong/Station.shp".format(script_dir))
+HERE = Path(__file__).resolve().parent        # .../MOVE/Modules
+ROOT = HERE.parent                            # .../MOVE
+sejong_gdf = gpd.read_file(ROOT / st.secrets.get("sejong_Station", ""))
+daejeon_gdf = gpd.read_file(ROOT / st.secrets.get("daejeon_Station", ""))
+
+station_df = pd.concat([sejong_gdf, daejeon_gdf]).reset_index(drop=True)
 station_df['pickupStationID'] = station_df['StationID']
 
 
-dispatch_df = pd.read_csv("{}/../data/dispatch_df.csv".format(script_dir))
+pop_df = gpd.read_file(ROOT / st.secrets.get("sejong_Population", ""))
+
+dispatch_df = pd.read_csv(ROOT/"data"/"dispatch_df.csv")
 dispatch_df['onboarding_datetime'] = dispatch_df['onboardingTime'].apply(parse_onboarding_time)
 dispatch_df['dropoff_datetime'] = dispatch_df['dropoffTime'].apply(parse_onboarding_time)
 
-operation_df = pd.read_csv("{}/../data/operation_df.csv".format(script_dir))
+operation_df = pd.read_csv(ROOT/"data"/"operation_df.csv")
 operation_df['startTime_datetime'] = operation_df['startTime'].apply(parse_onboarding_time)
 operation_df['endTime_datetime'] = operation_df['endTime'].apply(parse_onboarding_time)
 
-route_df = pd.read_csv("{}/../data/route_df.csv".format(script_dir))
+route_df = pd.read_csv(ROOT/"data"/"route_df.csv")
 route_df['originDeptTime_datetime'] = route_df['originDeptTime'].apply(parse_onboarding_time)
 route_df['destDeptTime_datetime'] = route_df['destDeptTime'].apply(parse_onboarding_time)
 
-request_df = pd.read_csv("{}/../data/request_df.csv".format(script_dir))
+request_df = pd.read_csv(ROOT/"data"/"request_df.csv")
 
 
 vehicle_df = operation_df.drop_duplicates(['vehicleID', 'VehicleType'])[['vehicleID', 'VehicleType']]

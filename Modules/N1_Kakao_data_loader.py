@@ -15,9 +15,9 @@ import streamlit as st
 
 HERE = Path(__file__).resolve().parent        # .../MOVE/Modules
 ROOT = HERE.parent                            # .../MOVE
-
 sejong_gdf = gpd.read_file(ROOT / st.secrets.get("sejong_Station", ""))
 daejeon_gdf = gpd.read_file(ROOT / st.secrets.get("daejeon_Station", ""))
+
 gdf = pd.concat([sejong_gdf, daejeon_gdf]).reset_index(drop=True)
 gdf['pickupStationID'] = gdf['StationID']
 
