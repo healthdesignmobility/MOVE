@@ -16,8 +16,8 @@ import streamlit as st
 HERE = Path(__file__).resolve().parent        # .../MOVE/Modules
 ROOT = HERE.parent                            # .../MOVE
 
-sejong_gdf = gpd.read_file("ROOT" / st.secrets.get("sejong_Station", ""))
-daejeon_gdf = gpd.read_file("ROOT" / st.secrets.get("daejeon_Station", ""))
+sejong_gdf = gpd.read_file(ROOT / st.secrets.get("sejong_Station", ""))
+daejeon_gdf = gpd.read_file(ROOT / st.secrets.get("daejeon_Station", ""))
 gdf = pd.concat([sejong_gdf, daejeon_gdf]).reset_index(drop=True)
 gdf['pickupStationID'] = gdf['StationID']
 
@@ -28,7 +28,7 @@ def parse_onboarding_time(t):
     except:
         return np.nan
 
-df = pd.read_csv("ROOT"/"data"/"dispatch_df.csv")
+df = pd.read_csv(ROOT/"data"/"dispatch_df.csv")
 df['onboarding_datetime'] = df['onboardingTime'].apply(parse_onboarding_time)
 
 def return_pickup_station_count(current_time, days_interval):
