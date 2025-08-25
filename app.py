@@ -25,7 +25,7 @@ st.set_page_config(
     initial_sidebar_state="auto",
     menu_items={
         'Get Help': 'https://www.healthdesign.kaist.ac.kr/',
-        'Report a bug': "jungyubaik@kaist.ac.kr",
+        'Report a bug': "https://www.healthdesign.kaist.ac.kr/",
         'About': "# 교통약자 이동지원 시스템\n이 대시보드는 교통약자의 이동 패턴을 분석하고, 실시간 지원 정보를 제공합니다."
         }
     )

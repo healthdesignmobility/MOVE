@@ -23,7 +23,7 @@ def parse_onboarding_time(t):
     except:
         return np.nan
 
-request_df = pd.read_csv("{}/data/request_df.csv".format(script_dir))
+request_df = pd.read_csv("{}/../data/request_df.csv".format(script_dir))
 
 def return_dispatch_ratio(current_time, days_interval):
 
