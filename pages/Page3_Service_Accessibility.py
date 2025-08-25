@@ -5,6 +5,19 @@ import numpy as np
 import json, geopandas as gpd, pandas as pd
 from Modules.P3_Kakao_population_loader import return_last_population_df, return_last_past_population_df
 from utils.maps import polygons_map_html, default_map_html
+import datetime as dt
+
+mode = st.secrets["mode"]
+
+if mode == 'static':
+    st.session_state.current_time = dt.datetime.strptime(st.secrets["current_time_test"], "%Y-%m-%d %H:%M")
+elif mode == 'dynamic':
+    st.session_state.current_time = dt.datetime.now()
+st.session_state.current_time = st.session_state.current_time.replace(second=0, microsecond=0)
+
+st.session_state.temp_interval = st.secrets["previous_days"]
+st.session_state.PAGES_URL = "https://healthdesignmobility.github.io/move/kakao_map/"
+st.session_state.KAKAO_API_KEY = st.secrets["kakao_api_key"]
 
 current_time  = st.session_state.current_time
 temp_interval = st.session_state.temp_interval

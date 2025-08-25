@@ -7,6 +7,19 @@ from Modules.P1_sevice_arrival_operation_times import return_graphs_and_stats
 from Modules.N2_Kakao_realtime_loader import return_realtime_operations
 from utils.maps import normalize_weights, markers_map_html, default_map_html, routes_map_html
 
+import datetime as dt
+mode = st.secrets["mode"]
+
+if mode == 'static':
+    st.session_state.current_time = dt.datetime.strptime(st.secrets["current_time_test"], "%Y-%m-%d %H:%M")
+elif mode == 'dynamic':
+    st.session_state.current_time = dt.datetime.now()
+st.session_state.current_time = st.session_state.current_time.replace(second=0, microsecond=0)
+
+st.session_state.temp_interval = st.secrets["previous_days"]
+st.session_state.PAGES_URL = "https://healthdesignmobility.github.io/move/kakao_map/"
+st.session_state.KAKAO_API_KEY = st.secrets["kakao_api_key"]
+
 
 current_time  = st.session_state.current_time
 temp_interval = st.session_state.temp_interval

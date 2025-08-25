@@ -9,6 +9,20 @@ from Modules.P2_boarding_vehicle_rate import return_boaring_vehicle_rates
 from Modules.P2_Kakao_link_loader import return_link_frequency
 from Modules.N1_Kakao_data_loader import return_pickup_station_count
 from utils.maps import normalize_weights, markers_map_html, default_map_html, links_map_html
+import datetime as dt
+
+mode = st.secrets["mode"]
+
+if mode == 'static':
+    st.session_state.current_time = dt.datetime.strptime(st.secrets["current_time_test"], "%Y-%m-%d %H:%M")
+elif mode == 'dynamic':
+    st.session_state.current_time = dt.datetime.now()
+st.session_state.current_time = st.session_state.current_time.replace(second=0, microsecond=0)
+
+st.session_state.temp_interval = st.secrets["previous_days"]
+st.session_state.PAGES_URL = "https://healthdesignmobility.github.io/move/kakao_map/"
+st.session_state.KAKAO_API_KEY = st.secrets["kakao_api_key"]
+
 
 current_time  = st.session_state.current_time
 temp_interval = st.session_state.temp_interval
