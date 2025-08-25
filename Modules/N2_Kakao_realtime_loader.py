@@ -43,7 +43,18 @@ route_df['destDeptTime_datetime'] = route_df['destDeptTime'].apply(parse_onboard
 
 request_df = pd.read_csv(ROOT/"data"/"request_df.csv")
 
-color_list = ['#ED553B', '#173F5F', '#3CAEA3', '#F6D55C', '#20639B', 'brown', 'pink', 'cyan', 'magenta', 'olive']
+color_list = [
+    '#ED553B',  # red-orange
+    '#173F5F',  # dark blue
+    '#3CAEA3',  # teal
+    '#F6D55C',  # yellow
+    '#20639B',  # blue
+    '#A52A2A',  # brown
+    '#FFC0CB',  # pink
+    '#00FFFF',  # cyan
+    '#FF00FF',  # magenta
+    '#808000',  # olive
+]
 
 def return_realtime_operations(current_time, minutes_interval):
 
