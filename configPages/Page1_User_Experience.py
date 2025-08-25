@@ -22,13 +22,14 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
     service_option_labels = list(service_options.keys())
     service_default_index = service_option_labels.index("통합 (교통소외지역 + 교통약자지역)")
     selected_service_label = st.selectbox(f"🕒 현재 시간: {current_time}", service_option_labels, index=service_default_index)
+    selected_service_values = service_options[selected_service_label]
   
     st.markdown('---')
 
     col = st.columns((1, 1, 1), gap='large')
     with col[0]:
         st.markdown('#### **|** 배차 소요시간 (초)')
-        chart_response, _, _, stats, _ = return_waitings(current_time=current_time, days_interval=temp_interval, reserveType=None, sevice_Type=selected_service_label)
+        chart_response, _, _, stats, _ = return_waitings(current_time=current_time, days_interval=temp_interval, reserveType=None, sevice_Type=selected_service_values)
         col_sub = st.columns((0.3, 1), gap='small')
         with col_sub[0]:
             st.metric(label="배차 소요시간 (초)", value=np.round(stats[0], 1), delta=np.round((stats[0] - stats[1]), 1), label_visibility='hidden')
@@ -38,7 +39,7 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
 
     with col[1]:
         st.markdown('#### **|** 서비스 대기시간 (분)')
-        _, chart_waiting, _, stats, _ = return_waitings(current_time=current_time, days_interval=temp_interval, reserveType=None, sevice_Type=selected_service_label)
+        _, chart_waiting, _, stats, _ = return_waitings(current_time=current_time, days_interval=temp_interval, reserveType=None, sevice_Type=selected_service_values)
         col_sub = st.columns((0.3, 1), gap='small')
         with col_sub[0]:
             st.metric(label="서비스 대기시간 (분)", value=np.round(stats[2]/60, 2), delta=np.round((stats[2] - stats[3])/60, 2), label_visibility='hidden')
@@ -48,7 +49,7 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
             
     with col[2]:
         st.markdown('#### **|** 배차 성공률 (%)')
-        chart_success, stats = return_dispatch_ratio(current_time=current_time, days_interval=temp_interval, sevice_Type=selected_service_label)
+        chart_success, stats = return_dispatch_ratio(current_time=current_time, days_interval=temp_interval, sevice_Type=selected_service_values)
         col_sub = st.columns((0.3, 1), gap='small')
         with col_sub[0]:
             st.metric(label="배차 성공률 (%)", value=np.round(stats[0], 1), delta=np.round((stats[0] - stats[1]), 1), label_visibility='hidden')
@@ -61,7 +62,7 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
     col = st.columns((1, 1, 1), gap='large')
     with col[0]:
         st.markdown('#### **|** 서비스 이용시간 (분)')
-        chart_Actual_use_time, _, _, stats = return_graphs_and_stats(current_time=current_time, days_interval=temp_interval, sevice_Type=selected_service_label)
+        chart_Actual_use_time, _, _, stats = return_graphs_and_stats(current_time=current_time, days_interval=temp_interval, sevice_Type=selected_service_values)
         col_sub = st.columns((0.3, 1), gap='small')
         with col_sub[0]:
             st.metric(label="서비스 이용시간 (분)", value=np.round(stats[0], 1), delta=np.round((stats[0] - stats[1]), 1), label_visibility='hidden')
@@ -71,7 +72,7 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
 
     with col[1]:
         st.markdown('#### **|** 차량 도착 정시성 (분)')
-        _, chart_pickup_delay, _, stats = return_graphs_and_stats(current_time=current_time, days_interval=temp_interval, sevice_Type=selected_service_label)
+        _, chart_pickup_delay, _, stats = return_graphs_and_stats(current_time=current_time, days_interval=temp_interval, sevice_Type=selected_service_values)
         col_sub = st.columns((0.3, 1), gap='small')
         with col_sub[0]:
             st.metric(label="차량 도착 정시성 (분)", value=np.round(stats[2], 1), delta=np.round((stats[2] - stats[3]), 1), label_visibility='hidden')
@@ -81,7 +82,7 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
 
     with col[2]:
         st.markdown('#### **|** 차량 주행 정시성 (분)')
-        _, _, chart_Actual_operation_delay, stats = return_graphs_and_stats(current_time=current_time, days_interval=temp_interval, sevice_Type=selected_service_label)
+        _, _, chart_Actual_operation_delay, stats = return_graphs_and_stats(current_time=current_time, days_interval=temp_interval, sevice_Type=selected_service_values)
         col_sub = st.columns((0.3, 1), gap='small')
         with col_sub[0]:
             st.metric(label="차량 주행 정시성 (분)", value=np.round(stats[4], 1), delta=np.round((stats[4] - stats[5]), 1), label_visibility='hidden')
