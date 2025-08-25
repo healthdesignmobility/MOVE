@@ -7,146 +7,136 @@
   <style>html,body{margin:0;height:100%}#map{width:100%;height:100vh}</style>
 
   <script>
-    // URL 파라미터 파싱
+    // ---- URL 파라미터 ----
     const params   = new URLSearchParams(location.search);
     const APPKEY   = params.get("appkey");
     const TYPE     = params.get("type") || "blank";
     const PAYLOAD  = params.get("payload") || "";
 
-    if (!APPKEY) {
-      alert("Kakao appkey가 전달되지 않았습니다. URL에 ?appkey=... 추가하세요.");
-    }
+    if (!APPKEY) { alert("Kakao appkey가 전달되지 않았습니다. ?appkey=..."); }
 
-    // Kakao SDK 동적 로드
+    // ---- Kakao SDK 동적 로드 ----
     const sdk = document.createElement("script");
     sdk.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(APPKEY)}&autoload=false`;
     sdk.onload = () => kakao.maps.load(initMap);
     document.head.appendChild(sdk);
 
+    // ---- 유틸 ----
     function b64ToJson(b64) {
       if (!b64) return null;
       try { return JSON.parse(decodeURIComponent(escape(atob(b64)))); }
       catch (e) { console.error("payload decode 실패:", e); return null; }
     }
-
     function clamp(n, min, max){ return Math.max(min, Math.min(n, max)); }
+
+    // 전역 map 참조
+    let map;
+
+    // 공통 마커 이미지(https)
+    const markerImg = (size=24) => new kakao.maps.MarkerImage(
+      "https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png",
+      new kakao.maps.Size(size, size*1.35),
+      { offset: new kakao.maps.Point(size/2, size*1.35) }
+    );
+
+    function applyCenterLevel(p) {
+      if (p && p.center) {
+        map.setCenter(new kakao.maps.LatLng(p.center.lat, p.center.lng));
+      }
+      if (p && typeof p.level === "number") {
+        map.setLevel(p.level);
+      }
+    }
+
+    // ---- postMessage용 드로잉 함수들 ----
+    function drawPoints(p) {
+      applyCenterLevel(p);
+      const arr = p.locations || [];
+      arr.forEach(pt => {
+        const size = Math.max(10, Math.min(60, Number(pt.scaled_weight || 24)));
+        new kakao.maps.Marker({
+          position: new kakao.maps.LatLng(pt.lat, pt.lng),
+          image: markerImg(size),
+          title: `${pt.station ?? ""}${pt.weight != null ? `: ${pt.weight}` : ""}`
+        }).setMap(map);
+      });
+    }
+
+    function drawRoutes(p) {
+      applyCenterLevel(p);
+      (p.routes || []).forEach(segList => {
+        if (!Array.isArray(segList) || segList.length < 2) return;
+        const color = segList[0].color || "#173F5F";
+        const path  = segList.map(pt => new kakao.maps.LatLng(pt.lat, pt.lng));
+        new kakao.maps.Polyline({
+          path, strokeWeight: 3, strokeColor: color, strokeOpacity: 0.9, strokeStyle: "shortdash"
+        }).setMap(map);
+      });
+      (p.pickups || []).forEach((u, i) => {
+        const pos  = new kakao.maps.LatLng(u.lat, u.lng);
+        const size = 30;
+        const title = `탑승순서: ${i+1}\n탑승시간: ${u.onboardingTime}\n승객 수: ${u.passengerCount}\n휠체어 수: ${u.wheelchairCount}\n서비스 유형: ${u.serviceType}`;
+        new kakao.maps.Marker({ position: pos, image: markerImg(size), title }).setMap(map);
+      });
+    }
+
+    function drawLinks(p) {
+      applyCenterLevel(p);
+      (p.links || []).forEach(r => {
+        const path = [
+          new kakao.maps.LatLng(r.start_lat, r.start_lon),
+          new kakao.maps.LatLng(r.end_lat, r.end_lon)
+        ];
+        new kakao.maps.Polyline({
+          path,
+          strokeWeight: r.weight || 8,
+          strokeColor: r.color || "#002642",
+          strokeOpacity: r.opacity ?? 0.8,
+          strokeStyle: "solid"
+        }).setMap(map);
+      });
+    }
+
+    function drawPolygons(p) {
+      applyCenterLevel(p);
+      (p.features || []).forEach(f => {
+        const coords = (((f||{}).geometry||{}).coordinates||[])[0];
+        if (!Array.isArray(coords)) return;
+        const path = coords.map(c => new kakao.maps.LatLng(c[1], c[0]));
+        const raw = (((f||{}).properties||{}).opacity_value);
+        const op  = Math.max(0, Math.min(1, Number(raw == null ? 0 : raw)));
+        if (op <= 0) return;
+        new kakao.maps.Polygon({
+          path, strokeWeight: 1, strokeColor: "#000000", strokeOpacity: 0.1,
+          fillColor: "#ED553B", fillOpacity: op
+        }).setMap(map);
+      });
+    }
 
     function initMap() {
       const center = new kakao.maps.LatLng(36.502306, 127.264738);
-      const map = new kakao.maps.Map(document.getElementById("map"), {
-        center: center,
-        level: 4
-      });
+      map = new kakao.maps.Map(document.getElementById("map"), { center, level: 4 });
 
+      // 1) 쿼리 기반 초기 렌더(선택): TYPE & PAYLOAD
       const payload = b64ToJson(PAYLOAD);
-
-      // 공통 마커 이미지 (https)
-      const markerImg = (size=24) => new kakao.maps.MarkerImage(
-        "https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png",
-        new kakao.maps.Size(size, size*1.35),
-        { offset: new kakao.maps.Point(size/2, size*1.35) }
-      );
-
-      if (!payload) {
-        console.log("빈 payload: 기본 지도만 표시");
-      } else {
-        if (TYPE === "points") {
-          payload.forEach(p => {
-            const size = Math.max(10, Math.min(60, Number(p.scaled_weight || 24)));
-            const pos = new kakao.maps.LatLng(p.lat, p.lng);
-            new kakao.maps.Marker({
-              position: pos,
-              image: markerImg(size),
-              title: `${p.station}: ${p.weight}`
-            }).setMap(map);
-          });
-
-        } else if (TYPE === "routes") {
-          const routes = payload.routes || [];
-          const pickups = payload.pickups || [];
-
-          routes.forEach(segList => {
-            if (!Array.isArray(segList) || segList.length < 2) return;
-            const color = segList[0].color || "#173F5F";
-            const path = segList.map(pt => new kakao.maps.LatLng(pt.lat, pt.lng));
-            new kakao.maps.Polyline({
-              path,
-              strokeWeight: 3,
-              strokeColor: color,
-              strokeOpacity: 0.9,
-              strokeStyle: "shortdash"
-            }).setMap(map);
-          });
-
-          pickups.forEach((p, idx) => {
-            const pos = new kakao.maps.LatLng(p.lat, p.lng);
-            const size = 30;
-            const title =
-              `탑승순서: ${idx+1}\n탑승시간: ${p.onboardingTime}\n승객 수: ${p.passengerCount}\n휠체어 수: ${p.wheelchairCount}\n서비스 유형: ${p.serviceType}`;
-            new kakao.maps.Marker({
-              position: pos,
-              image: markerImg(size),
-              title
-            }).setMap(map);
-          });
-
-        } else if (TYPE === "links") {
-          if (!Array.isArray(payload) || payload.length === 0) {
-            console.log("links payload empty");
-          } else {
-            const counts = payload.map(r => r.count || 0);
-            const minC = Math.min(...counts), maxC = Math.max(...counts);
-            const scale = v => maxC===minC ? 10 : Math.round(5 + (v-minC)/(maxC-minC)*(30-5));
-            const alpha = v => maxC===minC ? 0.8 : clamp(0.5 + (v-minC)/(maxC-minC)*(1.0-0.5), 0.4, 1.0);
-
-            payload.forEach(r => {
-              const path = [
-                new kakao.maps.LatLng(r.start_lat, r.start_lon),
-                new kakao.maps.LatLng(r.end_lat, r.end_lon)
-              ];
-              new kakao.maps.Polyline({
-                path,
-                strokeWeight: scale(r.count),
-                strokeColor: "#002642",
-                strokeOpacity: alpha(r.count),
-                strokeStyle: "solid"
-              }).setMap(map);
-            });
-          }
-
-        } else if (TYPE === "polygons") {
-          const fc = payload;
-          if (fc && fc.type === "FeatureCollection" && Array.isArray(fc.features)) {
-            fc.features.forEach(f => {
-              const coords = (((f||{}).geometry||{}).coordinates||[])[0];
-              if (!Array.isArray(coords)) return;
-              const path = coords.map(c => new kakao.maps.LatLng(c[1], c[0]));
-              const raw = (((f||{}).properties||{}).opacity_value);
-              const op = Math.max(0, Math.min(1, Number(raw == null ? 0 : raw)));
-              if (op <= 0) return;
-              new kakao.maps.Polygon({
-                path,
-                strokeWeight: 1,
-                strokeColor: "#000000",
-                strokeOpacity: 0.1,
-                fillColor: "#ED553B",
-                fillOpacity: op
-              }).setMap(map);
-            });
-          }
-        }
+      if (payload) {
+        if (TYPE === "points")   drawPoints(payload);
+        else if (TYPE === "routes")  drawRoutes(payload);
+        else if (TYPE === "links")   drawLinks(payload);
+        else if (TYPE === "polygons") drawPolygons(payload);
       }
 
-      // 부모 프레임과 postMessage 통신
+      // 2) 부모로부터 실시간 postMessage 수신
       window.addEventListener("message", (e) => {
         const data = e.data || {};
         if (!data.type) return;
-        if (data.type === "SET_MARKERS") { /* drawPoints 구현 */ }
-        if (data.type === "SET_ROUTES")  { /* drawRoutes 구현 */ }
-        if (data.type === "SET_LINKS")   { /* drawLinks 구현 */ }
-        if (data.type === "SET_GEOJSON") { /* drawPolygons 구현 */ }
+        if (data.type === "SET_MARKERS")   drawPoints(data.payload || {});
+        else if (data.type === "SET_ROUTES")  drawRoutes(data.payload || {});
+        else if (data.type === "SET_LINKS")   drawLinks(data.payload || {});
+        else if (data.type === "SET_GEOJSON") drawPolygons(data.payload || {});
       });
 
+      // 준비 완료 알림
       try { window.parent.postMessage({ type: "MAP_READY" }, "*"); }
       catch (e) { console.warn("MAP_READY 보내기 실패:", e); }
     }
