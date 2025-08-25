@@ -32,6 +32,15 @@ st.set_page_config(
 alt.themes.enable("dark")
 
 ########## 여기부터 대시보드 제작 ##########
+
+PAGE_MAP = {
+    "이용자 경험":        "pages/Page1_User_Experience.py",
+    "운영 효율":          "pages/Page2_Operation_Efficiency.py",
+    "서비스 접근성":       "pages/Page3_Service_.py",
+    "실시간 시뮬레이터":   "pages/Page4_Real_Time_Simulator.py",
+    "메세지 모니터링":     "pages/Page5_Message_Monitoring.py",
+}
+
 # 사이드바 정의
 with st.sidebar:
     selected = option_menu(
@@ -63,3 +72,6 @@ with st.sidebar:
     st.sidebar.caption("🛠️ 버전: v1.3.0")
     st.sidebar.caption("📬 문의: jungyubaik@kaist.ac.kr")
     st.sidebar.info("⚠️ 시범 운영 중입니다.\n의견은 언제든 환영합니다!")
+
+if selected:
+    st.switch_page(PAGE_MAP[selected])
