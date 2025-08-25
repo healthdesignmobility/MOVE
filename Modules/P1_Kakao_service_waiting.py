@@ -49,7 +49,7 @@ reservetype_dict = {
     '실시간 예약' : 2,
 }
 
-def return_waitings(current_time, days_interval, reserveType=None):
+def return_waitings(current_time, days_interval, reserveType=None, sevice_Type=[1, 2]):
 
     temp_operation_df = operation_df[(operation_df['endTime_datetime'] >= current_time - dt.timedelta(days=days_interval*2)) & (operation_df['endTime_datetime'] < current_time)].sort_values("endTime_datetime").reset_index(drop=True)
     temp_operation_df['Day'] = [(temp_operation_df['endTime_datetime'][i] - current_time).days for i in range(len(temp_operation_df))]
@@ -67,8 +67,9 @@ def return_waitings(current_time, days_interval, reserveType=None):
     temp_request_df['messageTime_Request'] = pd.to_datetime(temp_request_df['messageTime_Request'], unit='ms', utc=True)
     temp_request_df['messageTime_Request'] = temp_request_df['messageTime_Request'].dt.tz_convert('Asia/Seoul')
 
-    temp_request_df = temp_request_df[['dispatchID', 'messageTime_Request', 'pickupTimeRequest']]
+    temp_request_df = temp_request_df[['dispatchID', 'messageTime_Request', 'pickupTimeRequest', 'serviceType']]
     final_merged = pd.merge(left = temp_merged , right = temp_request_df, how = "inner", on = "dispatchID").sort_values('Day').reset_index(drop=True)
+    final_merged = final_merged[final_merged['serviceType'].isin(sevice_Type)].sort_values('Day').reset_index(drop=True)
     final_merged['messageTime'] = pd.to_datetime(final_merged['messageTime'], unit='ms', utc=True)
     final_merged['messageTime'] = final_merged['messageTime'].dt.tz_convert('Asia/Seoul')
     response_gaps = [(final_merged['messageTime'][i] - final_merged['messageTime_Request'][i]).total_seconds() for i in range(len(final_merged))]

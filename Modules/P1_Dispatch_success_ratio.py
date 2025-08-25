@@ -27,7 +27,7 @@ ROOT = HERE.parent                            # .../MOVE
 
 request_df = pd.read_csv(ROOT/"data"/"request_df.csv")
 
-def return_dispatch_ratio(current_time, days_interval):
+def return_dispatch_ratio(current_time, days_interval, sevice_Type=[1, 2]):
 
     request_df['messageTime'] = pd.to_datetime(request_df['messageTime'], unit='ms', utc=True)
     request_df['messageTime'] = request_df['messageTime'].dt.tz_convert('Asia/Seoul')
@@ -35,7 +35,8 @@ def return_dispatch_ratio(current_time, days_interval):
     temp_request_df = request_df[request_df['messageTime'] < pd.to_datetime(current_time, utc=True).tz_convert('Asia/Seoul')]
     temp_request_df = temp_request_df[temp_request_df['messageTime'] >= pd.to_datetime(current_time - dt.timedelta(days=days_interval*2), utc=True).tz_convert('Asia/Seoul')].reset_index(drop=True)
     temp_request_df['Day'] = [(temp_request_df['messageTime'][i] - pd.to_datetime(current_time, utc=True).tz_convert('Asia/Seoul')).days for i in range(len(temp_request_df))]
-    temp_request_df = temp_request_df[['Day', 'reserveType', 'confirmCheck']]
+    temp_request_df = temp_request_df[['Day', 'reserveType', 'confirmCheck', 'serviceType']]
+    temp_request_df = temp_request_df[temp_request_df['serviceType'].isin(sevice_Type)]
 
     past_df = temp_request_df[temp_request_df['Day'] < -days_interval].reset_index(drop=True)
     last_df = temp_request_df[temp_request_df['Day'] >= -days_interval].reset_index(drop=True)

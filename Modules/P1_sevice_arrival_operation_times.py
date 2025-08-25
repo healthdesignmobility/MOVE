@@ -45,7 +45,7 @@ route_df['destDeptTime_datetime'] = route_df['destDeptTime'].apply(parse_onboard
 request_df = pd.read_csv(ROOT/"data"/"request_df.csv")
 
 
-def return_graphs_and_stats(current_time, days_interval):
+def return_graphs_and_stats(current_time, days_interval, sevice_Type=[1, 2]):
 
     temp_operation_df = operation_df[(operation_df['endTime_datetime'] >= current_time - dt.timedelta(days=days_interval*2)) & (operation_df['endTime_datetime'] < current_time)].sort_values("endTime_datetime").reset_index(drop=True)
     temp_operation_df['Day'] = [(temp_operation_df['endTime_datetime'][i] - current_time).days for i in range(len(temp_operation_df))]
@@ -63,8 +63,9 @@ def return_graphs_and_stats(current_time, days_interval):
     temp_request_df['messageTime_Request'] = pd.to_datetime(temp_request_df['messageTime_Request'], unit='ms', utc=True)
     temp_request_df['messageTime_Request'] = temp_request_df['messageTime_Request'].dt.tz_convert('Asia/Seoul')
 
-    temp_request_df = temp_request_df[['dispatchID', 'messageTime_Request', 'pickupTimeRequest']]
+    temp_request_df = temp_request_df[['dispatchID', 'messageTime_Request', 'pickupTimeRequest', 'serviceType']]
     final_merged = pd.merge(left = temp_merged , right = temp_request_df, how = "inner", on = "dispatchID").sort_values('Day').reset_index(drop=True)
+    final_merged = final_merged[final_merged['serviceType'].isin(sevice_Type)].sort_values('Day').reset_index(drop=True)
     FFinal_merged = final_merged[['Day', 'VehicleType', 'onboarding_datetime', 'dropoff_datetime']]
     FFinal_merged['Expected_operation_time'] = [(FFinal_merged['dropoff_datetime'][i] - FFinal_merged['onboarding_datetime'][i]).total_seconds()/60 for i in range(len(FFinal_merged))]
     FFinal_merged = FFinal_merged.dropna().reset_index(drop=True)
