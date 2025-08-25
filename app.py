@@ -36,7 +36,7 @@ alt.themes.enable("dark")
 PAGE_MAP = {
     "이용자 경험":        "pages/Page1_User_Experience.py",
     "운영 효율":          "pages/Page2_Operation_Efficiency.py",
-    "서비스 접근성":       "pages/Page3_Service_.py",
+    "서비스 접근성":       "pages/Page3_Service_Accessibility.py",
     "실시간 시뮬레이터":   "pages/Page4_Real_Time_Simulator.py",
     "메세지 모니터링":     "pages/Page5_Message_Monitoring.py",
 }
@@ -44,26 +44,17 @@ PAGE_MAP = {
 # 사이드바 정의
 with st.sidebar:
     selected = option_menu(
-        menu_title = "MOVE Dashboard",
-        options = ["이용자 경험", "운영 효율", "서비스 접근성", "실시간 시뮬레이터", "메세지 모니터링"],
+        menu_title="MOVE Dashboard",
+        options=list(PAGE_MAP.keys()),
         icons=["emoji-smile", "graph-up", "geo-alt", "map", "chat-dots"],
-        menu_icon = "cast",
+        menu_icon="cast",
         orientation="vertical",
-        default_index = 0,
-        styles = {
-                "icon": {"color": "#ffffff", "font-size": "20px"}, 
-                "nav-link": {
-                    "font-size": "16px", 
-                    "text-align": "left", 
-                    "margin":"0px", 
-                    "--hover-color": "#000000"
-                },
-                "nav-link-selected": {
-                    "background-color": "#468186", 
-                    "font-weight": "bold", 
-                    "color": "#ffffff"
-                }
-        }
+        default_index=0,
+        styles={
+            "icon": {"color": "#ffffff", "font-size": "20px"},
+            "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#000000"},
+            "nav-link-selected": {"background-color": "#468186", "font-weight": "bold", "color": "#ffffff"},
+        },
     )
     st.markdown("<div style='height:570px;'></div>", unsafe_allow_html=True)
     st.sidebar.markdown("---")
