@@ -12,6 +12,7 @@ import math
 import altair as alt
 import yaml
 import os
+import streamlit as st
 
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)

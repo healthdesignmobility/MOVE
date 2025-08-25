@@ -9,12 +9,15 @@ import pymysql
 import geopandas as gpd
 import yaml
 import os
+from pathlib import Path
+import streamlit as st
 
-script_path = os.path.abspath(__file__)
-script_dir = os.path.dirname(script_path)
 
-sejong_gdf = gpd.read_file("{}/../data/ODD/sejong/Station.shp".format(script_dir))
-daejeon_gdf = gpd.read_file("{}/../data/ODD/daejeon/Station.shp".format(script_dir))
+HERE = Path(__file__).resolve().parent        # .../MOVE/Modules
+ROOT = HERE.parent                            # .../MOVE
+
+sejong_gdf = gpd.read_file("ROOT" / st.secrets.get("sejong_Station", ""))
+daejeon_gdf = gpd.read_file("ROOT" / st.secrets.get("daejeon_Station", ""))
 gdf = pd.concat([sejong_gdf, daejeon_gdf]).reset_index(drop=True)
 gdf['pickupStationID'] = gdf['StationID']
 
@@ -25,7 +28,7 @@ def parse_onboarding_time(t):
     except:
         return np.nan
 
-df = pd.read_csv("{}/../data/dispatch_df.csv".format(script_dir))
+df = pd.read_csv("ROOT"/"data"/"dispatch_df.csv")
 df['onboarding_datetime'] = df['onboardingTime'].apply(parse_onboarding_time)
 
 def return_pickup_station_count(current_time, days_interval):
