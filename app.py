@@ -5,18 +5,20 @@ import altair as alt
 import streamlit_option_menu
 from streamlit_option_menu import option_menu
 
-# ✅ set_page_config는 가장 먼저!
+# 페이지 정의
 st.set_page_config(
-    page_title="MOVE Dashboard",
+    page_title="교통약자 이동지원 대시보드",
     page_icon="♿",
     layout="wide",
     initial_sidebar_state="auto",
     menu_items={
-        'Get Help': 'https://www.healthdesign.kaist.ac.kr/',
-        'Report a bug': "https://www.healthdesign.kaist.ac.kr/",
+        'Get Help': 'https://www.healthdesign.kaist.ac.k'
+        'r/',
+        'Report a bug': "mailto:jungyubaik@kaist.ac.kr",
         'About': "# 교통약자 이동지원 시스템\n이 대시보드는 교통약자의 이동 패턴을 분석하고, 실시간 지원 정보를 제공합니다."
-    }
-)
+        }
+    )
+alt.themes.enable("dark")
 
 # 공통 초기화 (세션 키)
 mode = st.secrets.get("mode", "static")
@@ -38,7 +40,6 @@ current_time  = st.session_state.current_time
 temp_interval = st.session_state.temp_interval
 PAGES_URL     = st.session_state.PAGES_URL
 kakao_api_key = st.session_state.KAKAO_API_KEY
-
 
 
 # 페이지 별로 라우팅
@@ -74,16 +75,48 @@ with st.sidebar:
     )
     st.markdown("<div style='height:570px;'></div>", unsafe_allow_html=True)
     st.markdown("---")
-    st.caption(f"📊 데이터 출처: 한국과학기술원 건설및환경공학과")
-    st.caption(f"🕒 업데이트: {current_time}")
-    st.caption("🛠️ 버전: v1.3.0")
-    st.caption("📬 문의: jungyubaik@kaist.ac.kr")
-    st.info("⚠️ 시범 운영 중입니다.\n의견은 언제든 환영합니다!")
+    st.sidebar.caption("📊 데이터 출처: 한국과학기술원 건설및환경공학과")
+    st.sidebar.caption("🕒 업데이트: {}".format(current_time))
+    st.sidebar.caption("🛠️ 버전: v1.0.0")
+    st.sidebar.caption("📬 문의: jungyubaik@kaist.ac.kr")
+    st.sidebar.info("⚠️ 시범 운영 중입니다.\n의견은 언제든 환영합니다!")
 
-# 페이지 렌더
-PAGE_MAP[selected](
-    current_time=current_time,
-    temp_interval=temp_interval,
-    PAGES_URL = PAGES_URL,
-    kakao_api_key=kakao_api_key
-)
+if selected == "이용자 경험":
+    PAGE_MAP[selected](
+        current_time=current_time,
+        temp_interval=temp_interval,
+        PAGES_URL = PAGES_URL,
+        kakao_api_key=kakao_api_key
+    )
+
+if selected == "운영 효율":
+    PAGE_MAP[selected](
+        current_time=current_time,
+        temp_interval=temp_interval,
+        PAGES_URL = PAGES_URL,
+        kakao_api_key=kakao_api_key
+    )
+
+if selected == "서비스 접근성":
+    PAGE_MAP[selected](
+        current_time=current_time,
+        temp_interval=temp_interval,
+        PAGES_URL = PAGES_URL,
+        kakao_api_key=kakao_api_key
+    )
+
+if selected == "실시간 시뮬레이터":
+    PAGE_MAP[selected](
+        current_time=current_time,
+        temp_interval=temp_interval,
+        PAGES_URL = PAGES_URL,
+        kakao_api_key=kakao_api_key
+    )
+
+if selected == "메세지 모니터링":
+    PAGE_MAP[selected](
+        current_time=current_time,
+        temp_interval=temp_interval,
+        PAGES_URL = PAGES_URL,
+        kakao_api_key=kakao_api_key
+    )

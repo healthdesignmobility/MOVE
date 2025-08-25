@@ -15,10 +15,6 @@ import os
 
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
-
-with open("{}/db_config.yaml".format(script_dir), 'r') as file:
-    config = yaml.safe_load(file)
-mysql_config = config['mysql']
     
 sejong_gdf = gpd.read_file("{}/../data/ODD/sejong/Station.shp".format(script_dir))
 daejeon_gdf = gpd.read_file("{}/../data/ODD/daejeon/Station.shp".format(script_dir))
