@@ -1,0 +1,34 @@
+### 1. 정적 or 동적
+
+mode: "static"        # 정적 (프로토타입용): 외부 Cloud에서 KAIST 내부로 접근이 불가하여, 임시로 데이터를 같이 Push 하는 방식 
+# mode: "dynamic"     # 동적 (실제 적용): Cloud에서 외부 DB로 접근하여 현재 시간 기준으로 실시간 표출
+
+
+### 2. 어떤 db 연결할 것인지 정의
+
+# database:   # AI x mobility 자체 구축 DB, 접속은 가능하지만, 데이터는 없음.
+#   user: kaist_db
+#   passwd: "kaist502507"
+#   host: "20.41.122.158"
+#   port: 3306
+#   db: kaist_db
+#   charset: utf8mb4
+#   use_unicode: true
+
+database:          # Health design Lab 자체 구축 DB, 장기간 데이터 쌓여 있음 (프로토타입용)
+  user: root
+  passwd: "3644"
+  host: "143.248.121.90"
+  port: 3306
+  db: hdl
+  charset: utf8mb4
+  use_unicode: true
+
+### 3. 교통약자지역, 소외지역 정의
+
+
+
+# KAKAO Map API key
+
+
+

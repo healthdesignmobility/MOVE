@@ -13,8 +13,8 @@ import os
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 
-sejong_gdf = gpd.read_file("{}/ODD/sejong/Station.shp".format(script_dir))
-daejeon_gdf = gpd.read_file("{}/ODD/daejeon/Station.shp".format(script_dir))
+sejong_gdf = gpd.read_file("{}/../data/ODD/sejong/Station.shp".format(script_dir))
+daejeon_gdf = gpd.read_file("{}/../data/ODD/daejeon/Station.shp".format(script_dir))
 gdf = pd.concat([sejong_gdf, daejeon_gdf]).reset_index(drop=True)
 gdf['pickupStationID'] = gdf['StationID']
 
@@ -25,7 +25,7 @@ def parse_onboarding_time(t):
     except:
         return np.nan
 
-df = pd.read_csv("{}/data/dispatch_df.csv".format(script_dir))
+df = pd.read_csv("{}/../data/dispatch_df.csv".format(script_dir))
 df['onboarding_datetime'] = df['onboardingTime'].apply(parse_onboarding_time)
 
 def return_pickup_station_count(current_time, days_interval):

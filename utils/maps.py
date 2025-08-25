@@ -1,0 +1,102 @@
+import json
+import numpy as np
+
+def make_json_safe(x):
+    import pandas as pd
+    import datetime as dt
+    if x is None or isinstance(x, (str, int, float, bool)):
+        return x
+    if isinstance(x, (np.integer,)):  return int(x)
+    if isinstance(x, (np.floating,)): return float(x)
+    if isinstance(x, (np.bool_,)):    return bool(x)
+    if isinstance(x, (dt.datetime, dt.date, dt.time)):
+        return x.isoformat()
+    if 'pandas' in globals() or 'pd' in globals():
+        try:
+            if isinstance(x, pd.Timestamp): return x.isoformat()
+            if x is getattr(pd, "NaT", object()): return None
+        except Exception:
+            pass
+    if isinstance(x, dict):
+        return {k: make_json_safe(v) for k,v in x.items()}
+    if isinstance(x, (list, tuple, set)):
+        return [make_json_safe(v) for v in x]
+    return str(x)
+
+def normalize_weights(locations, min_size=20, max_size=40):
+    if not locations:
+        return []
+    weights = [loc.get("weight", 0) for loc in locations]
+    min_w, max_w = min(weights), max(weights)
+    for loc in locations:
+        w = loc.get("weight", 0)
+        norm = (w - min_w) / (max_w - min_w) if max_w > min_w else 0.5
+        scaled = norm * (max_size - min_size) + min_size
+        loc["scaled_weight"] = round(float(scaled), 2)
+    return locations
+
+def _iframe_html(PAGES_URL, msg_json, height=600):
+    return f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Kakao Map</title></head>
+<body>
+  <iframe id="kmap" src="{PAGES_URL}" style="width:100%;height:{height}px;border:0"></iframe>
+  <script>
+    const iframe = document.getElementById('kmap');
+    const targetOrigin = new URL("{PAGES_URL}").origin;
+    const msg = {msg_json};
+    function send(){{ iframe.contentWindow.postMessage(msg, targetOrigin); }}
+    iframe.addEventListener('load', () => {{}});
+    window.addEventListener('message', (e) => {{
+      if (e.origin === targetOrigin && e.data && e.data.type === 'MAP_READY') {{
+        send();
+      }}
+    }});
+  </script>
+</body>
+</html>
+"""
+
+def default_map_html(PAGES_URL, center=(36.502306, 127.264738), level=4):
+    payload = {"type":"SET_MARKERS","payload":{"center":{"lat":center[0],"lng":center[1]},"level":level,"locations":[]}}
+    return _iframe_html(PAGES_URL, json.dumps(payload, ensure_ascii=False))
+
+def markers_map_html(PAGES_URL, locations, center=(36.502306, 127.264738), level=4):
+    payload = {"type":"SET_MARKERS","payload":{"center":{"lat":center[0],"lng":center[1]},"level":level,"locations":locations}}
+    return _iframe_html(PAGES_URL, json.dumps(payload, ensure_ascii=False))
+
+def routes_map_html(PAGES_URL, segs, pickups, center=(36.502306, 127.264738), level=4):
+    safe = make_json_safe({
+        "type":"SET_ROUTES",
+        "payload":{
+            "center":{"lat":center[0],"lng":center[1]},
+            "level":level,
+            "routes":segs,
+            "pickups":pickups
+        }
+    })
+    return _iframe_html(PAGES_URL, json.dumps(safe, ensure_ascii=False))
+
+def links_map_html(PAGES_URL, link_df):
+    max_count = float(link_df["count"].max())
+    min_count = float(link_df["count"].min())
+    def norm(v, a,b,c,d):
+        if b==a: return (c+d)/2
+        t=(v-a)/(b-a); return c + t*(d-c)
+    links=[]
+    for _,r in link_df.iterrows():
+        c=float(r["count"])
+        links.append({
+            "start_lat": r["start_lat"], "start_lon": r["start_lon"],
+            "end_lat": r["end_lat"],     "end_lon": r["end_lon"],
+            "weight": int(norm(c, min_count,max_count,5,30)),
+            "opacity": float(norm(c, min_count,max_count,0.5,1.0)),
+            "color":"#002642"
+        })
+    payload={"type":"SET_LINKS","payload":{"links":links}}
+    return _iframe_html(PAGES_URL, json.dumps(payload, ensure_ascii=False))
+
+def polygons_map_html(PAGES_URL, features, center=(36.502306,127.264738), level=5, height=700):
+    payload={"type":"SET_GEOJSON","payload":{"center":{"lat":center[0],"lng":center[1]},"level":level,"features":features}}
+    return _iframe_html(PAGES_URL, json.dumps(payload, ensure_ascii=False), height=height)
