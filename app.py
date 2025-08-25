@@ -42,11 +42,11 @@ kakao_api_key = st.session_state.KAKAO_API_KEY
 
 
 # 페이지 별로 라우팅
-from pages import Page1_User_Experience as P1
-from pages import Page2_Operation_Efficiency as P2
-from pages import Page3_Service_Accessibility as P3
-from pages import Page4_Real_Time_Simulator as P4
-from pages import Page5_Message_Monitoring as P5
+from configPages import Page1_User_Experience as P1
+from configPages import Page2_Operation_Efficiency as P2
+from configPages import Page3_Service_Accessibility as P3
+from configPages import Page4_Real_Time_Simulator as P4
+from configPages import Page5_Message_Monitoring as P5
 
 PAGE_MAP = {
     "이용자 경험":         P1.render,

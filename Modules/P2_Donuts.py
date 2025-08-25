@@ -32,7 +32,7 @@ dispatch_df = pd.read_csv("{}/../data/dispatch_df.csv".format(script_dir))
 dispatch_df['onboarding_datetime'] = dispatch_df['onboardingTime'].apply(parse_onboarding_time)
 dispatch_df['dropoff_datetime'] = dispatch_df['dropoffTime'].apply(parse_onboarding_time)
 
-operation_df = pd.read_csv("{}../data/operation_df.csv".format(script_dir))
+operation_df = pd.read_csv("{}/../data/operation_df.csv".format(script_dir))
 operation_df['startTime_datetime'] = operation_df['startTime'].apply(parse_onboarding_time)
 operation_df['endTime_datetime'] = operation_df['endTime'].apply(parse_onboarding_time)
 
