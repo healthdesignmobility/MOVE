@@ -20,7 +20,7 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
     }
 
     service_option_labels = list(service_options.keys())
-    service_default_index = service_option_labels.index("실시간 예약")
+    service_default_index = service_option_labels.index("통합 (교통소외지역 + 교통약자지역)")
     selected_service_label = st.selectbox(f"🕒 현재 시간: {current_time}", service_option_labels, index=service_default_index)
   
     st.markdown('---')
