@@ -7,13 +7,12 @@ from streamlit_option_menu import option_menu
 
 # 페이지 정의
 st.set_page_config(
-    page_title="교통약자 이동지원 대시보드",
+    page_title="MOVE 대시보드",
     page_icon="♿",
     layout="wide",
     initial_sidebar_state="auto",
     menu_items={
-        'Get Help': 'https://www.healthdesign.kaist.ac.k'
-        'r/',
+        'Get Help': 'https://www.healthdesign.kaist.ac.kr',
         'Report a bug': "mailto:jungyubaik@kaist.ac.kr",
         'About': "# 교통약자 이동지원 시스템\n이 대시보드는 교통약자의 이동 패턴을 분석하고, 실시간 지원 정보를 제공합니다."
         }
@@ -61,7 +60,7 @@ PAGE_MAP = {
 with st.sidebar:
     
     selected = option_menu(
-        menu_title="MOVE Dashboard",
+        menu_title="MOVE 대시보드",
         options=list(PAGE_MAP.keys()),
         icons=["emoji-smile", "graph-up", "geo-alt", "map", "chat-dots"],
         menu_icon="cast",

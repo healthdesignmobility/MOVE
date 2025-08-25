@@ -90,9 +90,9 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
         selected_label = st.selectbox(f"🕒 현재 시간: {current_time}", option_labels, index=default_index)
         _, _, _, _, locations = return_waitings(current_time=current_time, days_interval=temp_interval, reserveType=selected_label)
         try:
-            map_html = markers_map_html(kakao_api_key, normalize_weights(locations))
-        except:
-            map_html = default_map_html(kakao_api_key)
+            map_html = markers_map_html(PAGES_URL, kakao_api_key, normalize_weights(locations))
+        except Exception:
+            map_html = default_map_html(PAGES_URL, kakao_api_key)
         components.html(map_html, height=700)
 
     with col[2]:
@@ -104,7 +104,7 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
         try:
             temp_routes = [temp_routes[selected_index]]
             temp_pickup_info = temp_pickup_info[selected_index]
-            map_html = routes_map_html(kakao_api_key, temp_routes, temp_pickup_info)
-        except:
-            map_html = default_map_html(kakao_api_key)
+            map_html = routes_map_html(PAGES_URL, kakao_api_key, temp_routes, temp_pickup_info)
+        except Exception:
+            map_html = default_map_html(PAGES_URL, kakao_api_key)
         components.html(map_html, height=700)

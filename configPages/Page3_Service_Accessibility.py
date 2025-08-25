@@ -192,20 +192,20 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
 
     col = st.columns((1, 1, 1), gap='large')
     with col[0]:
-        if population_df is not None and not population_df.empty:
-            map_html = polygons_map_html(kakao_api_key, population_df, 'total_percent')
-        else:
-            map_html = default_map_html(kakao_api_key)
+        try:
+            map_html = polygons_map_html(PAGES_URL, kakao_api_key, population_df, 'total_percent')
+        except Exception:
+            map_html = default_map_html(PAGES_URL, kakao_api_key)
         components.html(map_html, height=750)
     with col[1]:
-        if population_df is not None and not population_df.empty:
-            map_html = polygons_map_html(kakao_api_key, population_df, 'disabled_percent')
-        else:
-            map_html = default_map_html(kakao_api_key)
+        try:
+            map_html = polygons_map_html(PAGES_URL, kakao_api_key, population_df, 'disabled_percent')
+        except Exception:
+            map_html = default_map_html(PAGES_URL, kakao_api_key)
         components.html(map_html, height=750)
     with col[2]:
-        if population_df is not None and not population_df.empty:
-            map_html = polygons_map_html(kakao_api_key, population_df, 'olderadults_percent')
-        else:
-            map_html = default_map_html(kakao_api_key)
+        try:
+            map_html = polygons_map_html(PAGES_URL, kakao_api_key, population_df, 'olderadults_percent')
+        except Exception:
+            map_html = default_map_html(PAGES_URL, kakao_api_key)
         components.html(map_html, height=750)

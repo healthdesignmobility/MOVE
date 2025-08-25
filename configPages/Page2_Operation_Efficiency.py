@@ -198,9 +198,9 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
         selected_days = options[selected_label]
         locations, last_log = return_pickup_station_count(current_time, days_interval=selected_days)
         try:
-            map_html = markers_map_html(kakao_api_key, normalize_weights(locations))
-        except:
-            map_html = default_map_html(kakao_api_key)
+            map_html = markers_map_html(PAGES_URL, kakao_api_key, normalize_weights(locations))
+        except Exception:
+            map_html = default_map_html(PAGES_URL, kakao_api_key)
         components.html(map_html, height=700)
 
     with col[2]:
@@ -217,5 +217,8 @@ def render(current_time, temp_interval, PAGES_URL, kakao_api_key):
         selected_label = st.selectbox(f"🕒 마지막 업데이트: {last_log}", option_labels, index=default_index)
         selected_days = options[selected_label]
         link_df, last_log = return_link_frequency(current_time, day_interval=selected_days)
-        map_html = links_map_html(kakao_api_key, link_df)
+        try:
+            map_html = links_map_html(PAGES_URL, kakao_api_key, link_df)
+        except Exception:
+            map_html = default_map_html(PAGES_URL, kakao_api_key)
         components.html(map_html, height=700)
